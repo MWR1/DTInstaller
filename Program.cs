@@ -7,7 +7,6 @@ using DTInstaller.Commands;
 using static DTInstaller.Utils.Logger;
 using static DTInstaller.Utils.Constants;
 
-
 namespace DTInstaller
 {
 
