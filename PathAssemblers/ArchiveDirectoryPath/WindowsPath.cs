@@ -19,7 +19,7 @@ namespace DTInstaller.PathAssemblers.ArchiveDirectoryPath
          */
         public static string AssembleArchiveDirectoryPath(string clientType)
         {
-            string clientProcessPath = GetClientProcessPathAndKillIt(clientType); 
+            string clientProcessPath = GetClientProcessPathAndKill(clientType); 
             if (clientProcessPath == null) return null;
 
             // The file that launched the client process is found, for now, in the same directory structure
@@ -54,7 +54,7 @@ namespace DTInstaller.PathAssemblers.ArchiveDirectoryPath
         }
 
         /**
-         * <summary>Gets the directory "dicord_desktop_core-[number]".</summary>
+         * <summary>Gets the directory "discord_desktop_core-[number]".</summary>
          * <param name="currentPath">The existing path to which to attach the desktop core directory name.</param>
          * <returns>The discord_desktop_core-[number].</returns>
          */

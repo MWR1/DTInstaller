@@ -3,6 +3,8 @@
 using DTInstaller.Utils;
 using static DTInstaller.Utils.Methods;
 using static DTInstaller.Utils.Constants;
+using static DTInstaller.Utils.Logger;
+
 
 namespace DTInstaller.PathAssemblers.ArchiveDirectoryPath
 {
@@ -61,6 +63,7 @@ namespace DTInstaller.PathAssemblers.ArchiveDirectoryPath
                     return directoryPath;
             }
 
+            Log(LogVariant.Error, "Could not find the app version directory path.");
             return null;
         }
     }

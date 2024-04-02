@@ -11,7 +11,7 @@ namespace DTInstaller.Utils
     static class UpdatesManager
     {
         private static readonly HttpClient _client = new();
-        // We use a nullable bool so we can differentiate between unset and error (null/false).
+        // We use a nullable bool so we can differentiate between unset and error (null/false respectively).
         private static bool? _isNewUpdateAvailable = null;
         public static JsonScriptData FetchedScriptData { get; private set; } = null;
 
@@ -40,8 +40,8 @@ namespace DTInstaller.Utils
                 DebugLog(LogVariant.Information,
                     $"({nameof(CheckForUpdates)}) Local data directory is not defined. Creating...");
 
-                bool didCreateScriptDataPlace = LocalScriptDataManager.CreateLocalScriptData(fileContents: FetchedScriptData);
-                if (!didCreateScriptDataPlace)
+                bool didCreateScriptDataDirectory = LocalScriptDataManager.CreateLocalScriptData(fileContents: FetchedScriptData);
+                if (!didCreateScriptDataDirectory)
                     return (isNewUpdateAvailable: true, didError: true);
 
                 // Assuming it's the first time they get the installer, say there's an update.
@@ -65,20 +65,17 @@ namespace DTInstaller.Utils
         public static async Task<JsonScriptData> GetScript()
         {
             JsonScriptData localScriptData = LocalScriptDataManager.GetLocalScriptData();
-            if (localScriptData == null)
-            {
-                DebugLog(LogVariant.Information, $"({nameof(GetScript)}) Local data directory is not defined. Pulling script from repo...");
-                FetchedScriptData = await GetRepositoryScript();
-                if (FetchedScriptData == null) return null;
+            if (localScriptData != null) return localScriptData;
 
-                DebugLog(LogVariant.Information, $"({nameof(GetScript)}) Creating local script data place...");
-                bool didCreateScriptDataPlace = LocalScriptDataManager.CreateLocalScriptData(fileContents: FetchedScriptData);
-                if (!didCreateScriptDataPlace) return null;
+            DebugLog(LogVariant.Information, $"({nameof(GetScript)}) Local data directory is not defined, or script data is malformed. Pulling script from repo...");
+            FetchedScriptData = await GetRepositoryScript();
+            if (FetchedScriptData == null) return null;
 
-                return FetchedScriptData;
-            }
+            DebugLog(LogVariant.Information, $"({nameof(GetScript)}) Creating local script data directory...");
+            bool didCreateScriptDataPlace = LocalScriptDataManager.CreateLocalScriptData(fileContents: FetchedScriptData);
+            if (!didCreateScriptDataPlace) return null;
 
-            return localScriptData;
+            return FetchedScriptData;
         }
 
         /**

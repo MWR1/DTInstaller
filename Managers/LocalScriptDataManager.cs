@@ -32,7 +32,7 @@ namespace DTInstaller
         }
 
         /**
-         * <summary>Updates the script data file in case a script change has occured.</summary>
+         * <summary>Updates the script data file in case a script change has occurred.</summary>
          * <param name="scriptData">The script data to update the file with.</param>
          * <returns>True if the update has been successful, and false otherwise.</returns>
          */

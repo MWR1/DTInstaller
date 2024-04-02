@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 
 using DTInstaller.Utils;
 using static DTInstaller.Utils.Logger;
-using static DTInstaller.Utils.Methods;
 using static DTInstaller.Utils.Constants;
 
 namespace DTInstaller.Commands
@@ -33,12 +32,21 @@ namespace DTInstaller.Commands
 
             bool didUpdateLocalScriptData = LocalScriptDataManager
                 .UpdateLocalScriptData(UpdatesManager.FetchedScriptData);
+
             // While this may not stop the installation of the update itself, when the user wants to reinstall 
             // the script, they'll actually install an old update, so rather than doing that, just fail.
-            if (!didUpdateLocalScriptData) return false;
- 
+            if (!didUpdateLocalScriptData)
+            {
+                Log(LogVariant.Error, "Could not update the local script. Please try again.");
+                return false;
+            }
+
             string archiveDirectoryPath = ArchiveDirectoryPathAssembler.AssembleArchiveDirectoryPath();
-            if (archiveDirectoryPath == null) return false;
+            if (archiveDirectoryPath == null)
+            {
+                Log(LogVariant.Error, "Could not assemble the path to the directory of the archive.");
+                return false;
+            }
 
             string mainScreenFilePath = Path.Combine(archiveDirectoryPath, Paths.mainScreenFileWithinArchivePath);
             string sourceCodeCoreArchivePath = Path.Combine(archiveDirectoryPath, FileNames.archiveFileName);

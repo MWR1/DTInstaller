@@ -19,27 +19,42 @@ namespace DTInstaller.Utils
          * <param name="clientName">The name of the client.</param>
          * <returns>The client process path if found, and null otherwise.</returns>
          */
-        public static string GetClientProcessPathAndKillIt(string clientName)
+        public static string GetClientProcessPathAndKill(string clientName)
         {
             Process[] clientProcesses = Process.GetProcessesByName(clientName);
             if (clientProcesses.Length == 0) return null;
 
+
+            // As an Electron app, Discord spawns multiple processes that all lead back to the main process. Therefore,
+            // any child process will point to the main executable's path.
             string clientProcessPath = clientProcesses[0].MainModule.FileName;
-            
-            // While there's really only one Discord process, because Discord is an Electron app,
-            // it spawns multiple processes, which in turn will fill the array above with more than one
-            // process. Killing any one process associated with the client will terminate the entire client.
-            clientProcesses[0].Kill();
-            while (!clientProcesses[0].WaitForExit(Durations.timeoutForProcessExit))
+
+            foreach (Process clientProcess in clientProcesses)
             {
-                Log(LogVariant.Warning, $"Could not stop {clientName}.");
-                Log(LogVariant.Question, $"Do you want to retry to close {clientName}? (y/n)");
+                string currentProcessName = clientProcess.ProcessName;
 
-                string answer = Console.ReadLine();
-                if (answer == "n") return null;
+                try
+                {
+                    clientProcess.Kill();
+                    while (!clientProcess.WaitForExit(Durations.timeoutForProcessExit))
+                    {
+                        Log(LogVariant.Warning, $"Could not stop {currentProcessName}.");
+                        Log(LogVariant.Question, $"Do you want to retry to close {currentProcessName}? (y/n)");
 
-                clientProcesses[0].Kill();
-                Log(LogVariant.Information, $"Stopping {clientName}...");
+                        string answer = Console.ReadLine();
+                        if (answer == "n") return null;
+
+                        clientProcess.Kill();
+                        Log(LogVariant.Information, $"Stopping {currentProcessName}...");
+                    }
+                }
+                catch (Exception error)
+                {
+                    Log(LogVariant.Error,
+                        $"Could not stop {currentProcessName ?? "<unknown process name>"}. Reason: " + error.Message);
+
+                    return null;
+                }
             }
 
             return clientProcessPath;
@@ -60,7 +75,7 @@ namespace DTInstaller.Utils
             while (fileUsageChecks < fileUsageCheckProtection && targetFile.IsInUse())
             {
                 fileUsageChecks++;
-                DebugLog(
+                Log(
                     LogVariant.Information,
                     $"{filePath} is in use. Checks performed so far: " +
                     $"{fileUsageChecks} out of {fileUsageCheckProtection}. Retrying."

@@ -49,7 +49,7 @@ namespace DTInstaller
 
             bool hasPackedArchive = TryPackArchive();
             if (!hasPackedArchive) return false;
-            
+
             return true;
         }
 
@@ -69,7 +69,7 @@ namespace DTInstaller
             }
             catch (Exception error)
             {
-                Log(LogVariant.Error, $"The following error occured when trying to unpack the source code asar file: {error.Message}");
+                Log(LogVariant.Error, $"The following error occurred when trying to unpack the source code asar file: {error.Message}");
                 DebugLog(LogVariant.Error, error.ToString());
                 return false;
             }
@@ -82,10 +82,11 @@ namespace DTInstaller
         {
             try
             {
-                using FileStream targetFileStream = File.Open(_targetFilePath, FileMode.Open);
-                using StreamReader targetFileStreamReader = new(targetFileStream);
                 string modifiedSourceCode = null;
+                bool didFileUnlock = WaitForFileToUnlock(_targetFilePath, maxTimeToWait: Durations.timeToWaitForFileUnlock);
+                if (!didFileUnlock) return false;
 
+                using (StreamReader targetFileStreamReader = new(_targetFilePath))
                 {
                     // Our sourceCode array is going to follow this structure: [source_code, script_code].
                     // The script is delimited by Constants.scriptPresenceDelimiter, inside the source code
@@ -103,14 +104,22 @@ namespace DTInstaller
                     modifiedSourceCode = string.Join(Miscellaneous.scriptPresenceDelimiter, sourceCode);
                 }
 
-                // For some reason, the file stream doesn't start writing at the start of the file.
-                targetFileStream.Seek(0, SeekOrigin.Begin);
-                targetFileStream.Write(Encoding.UTF8.GetBytes(modifiedSourceCode));
+                // We overwrite the entire file in the case that the modified code length is somehow smaller than 
+                // the existing code in the file, so we don't have remnants.
+                using StreamWriter targetFileStreamWriter = new(_targetFilePath, append: false);
+                targetFileStreamWriter.Write(modifiedSourceCode);
+
                 return true;
+            }
+            catch (IOException error)
+            {
+                Log(LogVariant.Error, $"The following IO related error occurred while trying to inject the script: {error.Message}");
+                DebugLog(LogVariant.Error, error.ToString());
+                return false;
             }
             catch (Exception error)
             {
-                Log(LogVariant.Error, $"The following error occured while trying to inject the script: {error.Message}");
+                Log(LogVariant.Error, $"The following error occurred while trying to inject the script: {error.Message}");
                 DebugLog(LogVariant.Error, error.ToString());
                 return false;
             }
@@ -130,7 +139,7 @@ namespace DTInstaller
             }
             catch (Exception error)
             {
-                Log(LogVariant.Error, $"The following error occured while trying to pack everything back together: {error.Message}");
+                Log(LogVariant.Error, $"The following error occurred while trying to pack everything back together: {error.Message}");
                 DebugLog(LogVariant.Error, error.ToString());
                 return false;
             }

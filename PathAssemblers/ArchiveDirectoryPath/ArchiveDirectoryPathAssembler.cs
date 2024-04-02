@@ -2,6 +2,8 @@
 
 using static DTInstaller.Utils.Methods;
 using static DTInstaller.Utils.Constants;
+using static DTInstaller.Utils.Logger;
+using System.Diagnostics;
 
 namespace DTInstaller
 {
@@ -16,12 +18,16 @@ namespace DTInstaller
         public static string AssembleArchiveDirectoryPath()
         {
             string clientType = GetClientType();
-            return OS switch
+            switch(OS)
             {
-                OperatingSystems.Windows => WindowsPath.AssembleArchiveDirectoryPath(clientType),
-                OperatingSystems.Linux => LinuxPath.AssembleArchiveDirectoryPath(clientType),
-                _ => null,
-            };
+                case OperatingSystems.Windows: 
+                    return WindowsPath.AssembleArchiveDirectoryPath(clientType);
+                case OperatingSystems.Linux:
+                    return LinuxPath.AssembleArchiveDirectoryPath(clientType);
+                default:
+                    Log(LogVariant.Error, "The OS could not be identified.");
+                    return null;
+            }
         }
     }
 }
